@@ -6,3 +6,5 @@ gTTS==2.5.1
 python-multipart==0.0.9
 httpx
 python-dotenv
+langchain-groq
+langchain-core
