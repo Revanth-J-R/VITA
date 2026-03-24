@@ -1,0 +1,93 @@
+{
+  "name": "VITA Triage Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vita-triage",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "VITA Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "vita-triage"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.is_emergency }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Is Emergency?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// EMERGENCY ALERT — replace this node with Email/Slack/SMS as needed\nconst data = $input.item.json;\nconsole.log('🚨 VITA EMERGENCY ALERT 🚨');\nconsole.log('Patient Input:', data.original_input);\nconsole.log('Risk Level:', data.risk_level);\nconsole.log('Cause:', data.possible_cause);\nconsole.log('Emergency Message:', data.emergency_message);\nconsole.log('---');\nconsole.log('Recommendations:', data.recommendations);\nreturn [{ json: { alert_sent: true, type: 'EMERGENCY', data } }];"
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "Send Emergency Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "// TRIAGE LOG — replace with Google Sheets / DB node as needed\nconst data = $input.item.json;\nconst timestamp = new Date().toISOString();\nconsole.log(`[${timestamp}] VITA Triage Event`);\nconsole.log('Input:', data.original_input);\nconsole.log('Risk:', data.risk_level);\nconsole.log('Cause:', data.possible_cause);\nconsole.log('Emergency:', data.is_emergency);\nconsole.log('When to see doctor:', data.when_to_see_doctor);\nreturn [{ json: { logged: true, timestamp, risk_level: data.risk_level, is_emergency: data.is_emergency } }];"
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "Log Triage Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 440]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true }) }}"
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "Respond to VITA",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1020, 300]
+    }
+  ],
+  "connections": {
+    "VITA Webhook": {
+      "main": [[{ "node": "Is Emergency?", "type": "main", "index": 0 }]]
+    },
+    "Is Emergency?": {
+      "main": [
+        [{ "node": "Send Emergency Alert", "type": "main", "index": 0 }],
+        [{ "node": "Log Triage Result", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Emergency Alert": {
+      "main": [[{ "node": "Respond to VITA", "type": "main", "index": 0 }]]
+    },
+    "Log Triage Result": {
+      "main": [[{ "node": "Respond to VITA", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["VITA", "Healthcare", "Triage"],
+  "pinData": {}
+}

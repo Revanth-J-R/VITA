@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VITA – AI Family Doctor</title>
+  <meta name="description"
+    content="VITA – AI-powered Voice-Enabled Digital Family Doctor. Interactive clinical triage and live consultation." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4f8ef7;
+      --primary-dark: #2d6ee0;
+      --primary-glow: rgba(79, 142, 247, 0.35);
+      --accent: #7c3aed;
+      --accent-light: #a78bfa;
+      --emergency: #ef4444;
+      --emergency-glow: rgba(239, 68, 68, 0.4);
+      --listening: #10b981;
+      --low: #22c55e;
+      --medium: #f59e0b;
+      --high: #ef4444;
+      --mic-active: #f43f5e;
+      --bg: #090c12;
+      --bg-card: #111520;
+      --bg-card2: #161b27;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e8ecf4;
+      --text-muted: #7a84a0;
+      --radius: 20px;
+      --transition: 0.25s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background Mesh */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(79, 142, 247, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 60%);
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 0 32px;
+    }
+
+    .logo-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 0 24px var(--primary-glow);
+      flex-shrink: 0;
+      animation: pulse-logo 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-logo {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px var(--primary-glow);
+      }
+
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 40px var(--primary-glow), 0 0 60px rgba(124, 58, 237, 0.2);
+      }
+    }
+
+    header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+    }
+
+    header h1 span {
+      background: linear-gradient(90deg, var(--primary), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* Status Badge */
+    .n8n-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    .n8n-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #444;
+    }
+
+    .n8n-dot.active {
+      background: var(--low);
+      box-shadow: 0 0 8px var(--low);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    /* Mode Tabs */
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 15px;
+      padding: 6px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all var(--transition);
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: #000;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Conversation Area */
+    .consultation-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+      min-height: 380px;
+      justify-content: center;
+    }
+
+    /* Visual State Indicator */
+    .visual-indicator {
+      width: 160px;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid var(--primary);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* States */
+    .state-listening .pulse-ring {
+      border-color: var(--listening);
+      animation: pulse-out 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .state-speaking .pulse-ring {
+      border-color: var(--primary);
+      animation: pulse-out 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .state-thinking .pulse-ring {
+      border-color: var(--accent);
+      animation: pulse-rotate 2s linear infinite;
+      border-style: dashed;
+    }
+
+    @keyframes pulse-out {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+    }
+
+    @keyframes pulse-rotate {
+      0% {
+        transform: rotate(0deg) scale(1.1);
+        opacity: 0.6;
+      }
+
+      100% {
+        transform: rotate(360deg) scale(1.1);
+        opacity: 0.6;
+      }
+    }
+
+    .mic-icon-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--bg-card2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      border: 2px solid var(--border);
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+
+    .state-listening .mic-icon-large {
+      background: var(--listening);
+      color: #fff;
+      border-color: #fff;
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+    }
+
+    .state-speaking .mic-icon-large {
+      background: var(--primary);
+      color: #fff;
+      border-color: #fff;
+      box-shadow: 0 0 40px rgba(79, 142, 247, 0.3);
+    }
+
+    .status-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      min-height: 24px;
+      transition: color 0.3s ease;
+    }
+
+    .state-listening .status-text {
+      color: var(--listening);
+    }
+
+    .state-speaking .status-text {
+      color: var(--primary);
+    }
+
+    /* Transcript */
+    .transcript-container {
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border: 1px solid var(--border);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .msg {
+      max-width: 85%;
+      padding: 10px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-doc {
+      align-self: flex-start;
+      background: var(--bg-card2);
+      color: var(--text);
+      border-bottom-left-radius: 2px;
+      border: 1px solid var(--border);
+    }
+
+    /* Controls */
+    .consult-controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      box-shadow: 0 8px 25px rgba(79, 142, 247, 0.25);
+    }
+
+    .btn-start:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(79, 142, 247, 0.35);
+    }
+
+    .btn-stop {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--emergency);
+      border: 1.5px solid var(--emergency);
+    }
+
+    .btn-stop:hover {
+      background: var(--emergency);
+      color: #fff;
+    }
+
+    /* Old components styles */
+    .input-area {
+      width: 100%;
+      min-height: 120px;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      padding: 20px;
+      resize: none;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    .input-area:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+
+    .example-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .example-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: #fff;
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #eee;
+      transform: translateY(-2px);
+    }
+
+    /* Results */
+    #resultSection {
+      display: none;
+      margin-top: 32px;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .risk-badge {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .risk-LOW {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--low);
+      border: 1px solid var(--low);
+    }
+
+    .risk-MEDIUM {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--medium);
+      border: 1px solid var(--medium);
+    }
+
+    .risk-HIGH {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--high);
+      border: 1px solid var(--high);
+    }
+
+    .emergency-banner {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), transparent);
+      border: 2px solid var(--emergency);
+      padding: 24px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 40px var(--emergency-glow);
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--text-muted);
+      font-size: 13px;
+      opacity: 0.6;
+    }
+
+    footer span {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-mesh"></div>
+  <div class="wrapper">
+
+    <header>
+      <div class="logo-icon">🩺</div>
+      <div style="flex:1">
+        <h1><span>VITA</span></h1>
+        <p>AI-Powered Voice-Enabled Digital Family Doctor</p>
+      </div>
+      <div class="n8n-badge" id="n8nBadge">
+        <div class="n8n-dot" id="n8nDot"></div>
+        <span id="n8nLabel">n8n Offline</span>
+      </div>
+    </header>
+
+    <div class="mode-tabs">
+      <button class="tab-btn active" onclick="switchTab('live')">🗣️ Live Consultation</button>
+      <button class="tab-btn" onclick="switchTab('text')">💬 Text Triage</button>
+    </div>
+
+    <!-- ====== LIVE CONSULTATION TAB (REBUILT) ====== -->
+    <div class="section active" id="sectionLive">
+      <div class="card">
+        <div class="card-title">Continuous Medical Session</div>
+
+        <div class="consultation-box" id="consultationBox">
+          <div class="visual-indicator" id="indicator">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring" style="animation-delay: 0.5s"></div>
+            <div class="mic-icon-large" id="micStatusIcon">🩺</div>
+          </div>
+
+          <div class="status-text" id="statusText">Ready to start your consultation</div>
+
+          <div class="transcript-container" id="transcript">
+            <div class="msg msg-doc">Hello, I am VITA. How can I help you today?</div>
+          </div>
+
+          <div class="consult-controls">
+            <button class="btn btn-start" id="startBtn" onclick="toggleConsultation()">
+              <span>🚀 Start Live Consultation</span>
+            </button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopConsultation()" style="display:none">
+              <span>🔴 End Session</span>
+            </button>
+          </div>
+        </div>
+
+        <audio id="liveAudioPlayer" style="display:none"></audio>
+      </div>
+
+      <div
+        style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:18px; padding:20px; font-size:14px; color:var(--text-muted); line-height:1.6">
+        ✨ <strong>CONVERSATION MODE:</strong> VITA will now listen to you, ask iterative questions to narrow down
+        symptoms, and provide a final clinical assessment once enough information is gathered. Just speak naturally.
+      </div>
+    </div>
+
+    <!-- ====== TEXT TAB ====== -->
+    <div class="section" id="sectionText">
+      <div class="card">
+        <div class="card-title">Quick Triage</div>
+        <textarea class="input-area" id="symptomInput"
+          placeholder="I have a recurring pain in my lower back..."></textarea>
+        <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap">
+          <span class="example-chip" onclick="fillExample('I have a sharp pain in my chest')">Chest Pain</span>
+          <span class="example-chip" onclick="fillExample('Fever since two days with chills')">Fever</span>
+          <span class="example-chip" onclick="fillExample('Stomach cramps after eating dinner')">Stomach Pain</span>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:20px">
+          <button class="btn btn-primary" onclick="analyzeText()">Analyze Symptoms →</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ====== RESULTS ====== -->
+    <div id="resultSection">
+      <div class="emergency-banner" id="emergencyBanner" style="display:none">
+        <h2 style="color:var(--emergency); margin-bottom:8px">⚠️ MEDICAL EMERGENCY</h2>
+        <p id="emergencyMessage"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Assessment Summary</div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px">
+          <div id="riskBadge" class="risk-badge">MEDIUM</div>
+          <span style="color:var(--text-muted)">Risk Level</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
+          <div
+            style="background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid var(--border)">
+            <div
+              style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px">
+              Possible Cause</div>
+            <div id="possibleCause" style="font-weight:600">Viral Infection</div>
+          </div>
+          <div
+            style="background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid var(--border)">
+            <div
+              style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px">
+              Action Threshold</div>
+            <div id="whenToSee" style="font-weight:600">If fever stays > 102</div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <div class="card-title" style="margin-bottom:12px">Recommendations</div>
+          <ul id="recsList" style="list-style:none; display:flex; flex-direction:column; gap:8px"></ul>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost" onclick="resetUI()">🔄 Start Fresh</button>
+    </div>
+
+    <footer>
+      <p>⚕️ <span>VITA</span> Intelligent Medical Engine | Always consult a doctor for serious concerns.</p>
+    </footer>
+  </div>
+
+  <script>
+    let isConsulting = false;
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let sessionId = null;
+    let recognition = null; // Global recognition object
+    const liveAudio = document.getElementById('liveAudioPlayer');
+
+    // ── Utils ──
+    function switchTab(mode) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`section${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      if (mode !== 'live') stopConsultation();
+    }
+
+    function addMsg(text, sender) {
+      const transcript = document.getElementById('transcript');
+      const div = document.createElement('div');
+      div.className = `msg msg-${sender}`;
+      
+      // Basic Markdown support
+      let formatted = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')             // Italics
+        .replace(/^\* (.*)/gm, '• $1')                    // Bullets
+        .replace(/\n/g, '<br>');                          // Newlines
+
+      div.innerHTML = formatted;
+      transcript.appendChild(div);
+      transcript.scrollTop = transcript.scrollHeight;
+    }
+
+    function setUIState(state) {
+      const indicator = document.getElementById('indicator');
+      const statusText = document.getElementById('statusText');
+      const micIcon = document.getElementById('micStatusIcon');
+
+      indicator.className = 'visual-indicator state-' + state;
+
+      if (state === 'listening') {
+        statusText.textContent = "VITA is listening...";
+        micIcon.textContent = "🎙️";
+      } else if (state === 'speaking') {
+        statusText.textContent = "VITA is speaking...";
+        micIcon.textContent = "🔊";
+      } else if (state === 'thinking') {
+        statusText.textContent = "VITA is thinking...";
+        micIcon.textContent = "🧠";
+      } else {
+        statusText.textContent = "Ready to start";
+        micIcon.textContent = "🩺";
+      }
+    }
+
+    // ── Consultation Loop ──
+    let isRestarting = false; // Guard against duplicate recognition.start() calls
+
+    async function toggleConsultation() {
+      if (!isConsulting) {
+        isConsulting = true;
+        isRestarting = false;
+        sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('stopBtn').style.display = 'inline-flex';
+        document.getElementById('transcript').innerHTML = '<div class="msg msg-doc">Hello, I am VITA. Please describe your symptoms.</div>';
+        startVoiceLoop();
+      }
+    }
+
+    function stopConsultation() {
+      isConsulting = false;
+      isRecording = false;
+      isRestarting = false;
+      if (mediaRecorder) try { mediaRecorder.stop(); } catch (e) { }
+      if (recognition) try { recognition.stop(); } catch (e) { }
+      document.getElementById('startBtn').style.display = 'inline-flex';
+      document.getElementById('stopBtn').style.display = 'none';
+      setUIState('idle');
+      sessionId = null;
+    }
+
+    async function startVoiceLoop() {
+      if (!isConsulting) return;
+
+      // Check for Browser's Native Speech Recognition (Chrome/Edge)
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      setUIState('listening');
+      recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        console.log("Web Speech started...");
+        isRecording = true;
+      };
+
+      recognition.onresult = (event) => {
+        const result = event.results[event.results.length - 1];
+        const text = result[0].transcript;
+        const statusText = document.getElementById('statusText');
+        statusText.textContent = text; // Show live transcript
+
+        if (result.isFinal) {
+          console.log("Final Speech:", text);
+          processTextVoice(text);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.log("Speech Recognition error:", event.error);
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          // These are benign — onend will fire after this and handle the restart
+          return;
+        } else {
+          stopConsultation();
+          addMsg("Mic error: " + event.error + ". Please refresh and try again.", 'doc');
+        }
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        // Only restart if we are still in consultation, not thinking, and not already scheduling a restart
+        if (isConsulting && !isRestarting && !document.getElementById('statusText').textContent.includes("🧠")) {
+          isRestarting = true;
+          setTimeout(() => {
+            isRestarting = false;
+            if (isConsulting && !isRecording) {
+              try { recognition.start(); } catch (e) { console.warn("Recognition restart failed:", e); }
+            }
+          }, 300);
+        }
+      };
+
+      recognition.start();
+    }
+
+    // Simplified "text from voice" processing using the existing triage_text endpoint
+    async function processTextVoice(text) {
+      if (!text.trim()) return;
+      setUIState('thinking');
+
+      try {
+        addMsg(text, 'user');
+        const res = await fetch('/api/v1/triage/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_input: text,
+            session_id: sessionId
+          })
+        });
+        const data = await res.json();
+
+        if (data.doctor_message) {
+          addMsg(data.doctor_message, 'doc');
+          // data here is a flat TriageResponse (not nested under .response)
+          speakDoctorResponse(data.doctor_message, data, false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (isConsulting) startVoiceLoop();
+      }
+    }
+
+    // isNested=true  → voice path: triageData lives in data.response
+    // isNested=false → text path:  triageData is the flat object itself
+    function speakDoctorResponse(text, data, isNested = true) {
+      setUIState('speaking');
+      const triageData = isNested ? data.response : data;
+      const synth = window.speechSynthesis;
+
+      if (!synth) {
+        if (triageData?.is_complete) finishConsultation(triageData);
+        else if (isConsulting) startVoiceLoop();
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(
+        text.replace(/\*\*/g, '').replace(/###/g, '').replace(/⚠️|🧠|🎙️|🔊|🩺/g, '')
+      );
+
+      utterance.onend = () => {
+        if (triageData?.is_complete) {
+          finishConsultation(triageData);
+        } else if (isConsulting) {
+          startVoiceLoop();
+        }
+      };
+
+      utterance.onerror = (e) => {
+        console.error("Speech Synthesis Error:", e);
+        if (isConsulting) startVoiceLoop();
+      };
+
+      synth.speak(utterance);
+    }
+
+    function finishConsultation(data) {
+      isConsulting = false;
+      setUIState('idle');
+      showResults(data);
+      addMsg("Consultation complete. Please see the summary below.", 'doc');
+      document.getElementById('startBtn').style.display = 'inline-flex';
+      document.getElementById('stopBtn').style.display = 'none';
+    }
+
+    // ── Manual & File Analysis ──
+    function fillExample(text) {
+      document.getElementById('symptomInput').value = text;
+      analyzeText();
+    }
+
+    function handleFile(input) {
+      const file = input.files[0];
+      const uploadBtn = document.getElementById('uploadBtn');
+      const fileNameDiv = document.getElementById('fileName');
+      if (file) {
+        fileNameDiv.textContent = "Selected: " + file.name;
+        uploadBtn.disabled = false;
+      } else {
+        fileNameDiv.textContent = "";
+        uploadBtn.disabled = true;
+      }
+    }
+
+    async function analyzeText() {
+      const text = document.getElementById('symptomInput').value;
+      if (!text.trim()) return alert("Please enter some symptoms first.");
+
+      // UI feedback - careful with event target
+      const btn = window.event?.target && window.event.target.tagName === 'BUTTON' ? window.event.target : null;
+      const oldText = btn ? btn.textContent : null;
+      if (btn) btn.textContent = "🧠 Analyzing...";
+
+      try {
+        const res = await fetch('/api/v1/triage/text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_input: text })
+        });
+        const data = await res.json();
+        showResults(data);
+      } catch (err) {
+        console.error(err);
+        alert("Error analyzing text symptoms.");
+      } finally {
+        if (btn && oldText) btn.textContent = oldText;
+        else if (btn) btn.textContent = "Analyze Symptoms →";
+      }
+    }
+
+
+    function showResults(data) {
+      const sec = document.getElementById('resultSection');
+      sec.style.display = 'block';
+
+      // Hide consultative UI if we are in a static mode
+      if (!isConsulting) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      }
+
+      const eb = document.getElementById('emergencyBanner');
+      if (data.is_emergency) {
+        eb.style.display = 'block';
+        document.getElementById('emergencyMessage').textContent = data.emergency_message;
+      } else eb.style.display = 'none';
+
+      const rb = document.getElementById('riskBadge');
+      rb.className = `risk-badge risk-${data.risk_level}`;
+      rb.textContent = data.risk_level;
+
+      document.getElementById('possibleCause').textContent = data.possible_cause;
+      document.getElementById('whenToSee').textContent = data.when_to_see_doctor;
+
+      const rList = document.getElementById('recsList');
+      rList.innerHTML = '';
+      data.recommendations.forEach(r => {
+        const li = document.createElement('li');
+        li.style = "background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:10px; font-size:14px";
+        li.textContent = "✅ " + r;
+        rList.appendChild(li);
+      });
+
+      sec.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function resetUI() {
+      if (sessionId) {
+        try {
+          await fetch(`/api/v1/sessions/${sessionId}`, { method: 'DELETE' });
+          console.log("Session cleared on server.");
+        } catch (e) {
+          console.warn("Failed to clear session on server:", e);
+        }
+      }
+      document.getElementById('resultSection').style.display = 'none';
+      addMsg("Session reset. How can I help you?", 'doc');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Re-check health to see if Whisper is back
+      checkHealth();
+    }
+
+    async function checkHealth() {
+      try {
+        const r = await fetch('/health');
+        const d = await r.json();
+
+        // Update n8n badge
+        if (d.n8n_webhook !== "not configured") {
+          document.getElementById('n8nDot').classList.add('active');
+          document.getElementById('n8nLabel').textContent = "n8n Connected";
+        }
+
+        // Update Mode Badge (or just log)
+        if (d.mode) {
+          console.log("System Mode:", d.mode);
+        }
+      } catch (err) {
+        console.warn("Health check failed:", err);
+      }
+    }
+    checkHealth();
+  </script>
+</body>
+
+</html>
